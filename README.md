@@ -6,4 +6,7 @@ Make sure you clone the GitHub repository, (git clone "SSH Key") and install the
 
 Make sure you also have the necessary applications to make this as smooth as possible.  (Postgres, PgAdmin)
 
+### 2.  Usage
+Use the uvicorn module you installed from the requirements.txt file by running: uvicorn main2:app --reload in the terminal.
+
 
