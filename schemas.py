@@ -9,7 +9,6 @@ class UserCreate(UserBase):
 
 class User(UserBase):
     id: int
-    recipes: List["Recipe"] = []
 
     class Config:
         orm_mode = True
@@ -25,7 +24,6 @@ class RecipeCreate(RecipeBase):
 class Recipe(RecipeBase):
     id: int
     user_id: int
-    owner: User
 
     class Config:
         orm_mode = True
@@ -40,8 +38,6 @@ class Comment(CommentBase):
     id: int
     user_id: int
     recipe_id: int
-    user: User
-    recipe: Recipe
 
     class Config:
         orm_mode = True
@@ -56,8 +52,6 @@ class Like(LikeBase):
     id: int
     user_id: int
     recipe_id: int
-    user: User
-    recipe: Recipe
 
     class Config:
         orm_mode = True
