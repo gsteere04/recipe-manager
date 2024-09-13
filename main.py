@@ -1,10 +1,13 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
-
-import schemas, crud
-from database import SessionLocal, engine
+from sqlalchemy.exc import IntegrityError
+from database import SessionLocal, engine, get_db
+import crud, models, schemas
+from schemas import CommentUpdate  # Remove LikeUpdate if you're not using it
 
 app = FastAPI()
+
+# Remove any test data creation here
 
 # Dependency to get the database session
 def get_db():
@@ -17,7 +20,7 @@ def get_db():
 # User CRUD Operations
 
 @app.post("/users", response_model=schemas.User)
-async def create_user(user: schemas.User, db: Session = Depends(get_db)):
+async def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     return crud.create_user(db=db, user=user)
 
 @app.get("/users/{user_id}", response_model=schemas.User)
@@ -49,8 +52,11 @@ async def delete_user(user_id: int, db: Session = Depends(get_db)):
 # Recipe CRUD Operations
 
 @app.post("/recipes", response_model=schemas.Recipe)
-async def create_recipe(recipe: schemas.Recipe, db: Session = Depends(get_db)):
-    return crud.create_recipe(db=db, recipe=recipe)
+def create_recipe(recipe: schemas.RecipeCreate, db: Session = Depends(get_db)):
+    try:
+        return crud.create_recipe(db=db, recipe=recipe)
+    except IntegrityError:
+        raise HTTPException(status_code=404, detail="User not found")
 
 @app.get("/recipes/{recipe_id}", response_model=schemas.Recipe)
 async def get_recipe(recipe_id: int, db: Session = Depends(get_db)):
@@ -64,12 +70,12 @@ async def get_recipes(db: Session = Depends(get_db)):
     recipes = crud.get_recipes(db)
     return recipes
 
-@app.patch("/recipes/{recipe_id}", response_model=schemas.Recipe)
-async def update_recipe(recipe_id: int, updated_recipe: schemas.Recipe, db: Session = Depends(get_db)):
-    recipe = crud.update_recipe(db, recipe_id, updated_recipe)
-    if recipe is None:
+@app.put("/recipes/{recipe_id}", response_model=schemas.Recipe)
+def update_recipe(recipe_id: int, recipe: schemas.RecipeUpdate, db: Session = Depends(get_db)):
+    db_recipe = crud.update_recipe(db, recipe_id, recipe)
+    if db_recipe is None:
         raise HTTPException(status_code=404, detail="Recipe not found")
-    return recipe
+    return db_recipe
 
 @app.delete("/recipes/{recipe_id}", response_model=dict)
 async def delete_recipe(recipe_id: int, db: Session = Depends(get_db)):
@@ -81,8 +87,11 @@ async def delete_recipe(recipe_id: int, db: Session = Depends(get_db)):
 # Comment CRUD Operations
 
 @app.post("/comments", response_model=schemas.Comment)
-async def create_comment(comment: schemas.Comment, db: Session = Depends(get_db)):
-    return crud.create_comment(db=db, comment=comment)
+def create_comment(comment: schemas.CommentCreate, db: Session = Depends(get_db)):
+    try:
+        return crud.create_comment(db=db, comment=comment)
+    except IntegrityError:
+        raise HTTPException(status_code=404, detail="User or Recipe not found")
 
 @app.get("/comments/{comment_id}", response_model=schemas.Comment)
 async def get_comment(comment_id: int, db: Session = Depends(get_db)):
@@ -97,11 +106,8 @@ async def get_comments(db: Session = Depends(get_db)):
     return comments
 
 @app.patch("/comments/{comment_id}", response_model=schemas.Comment)
-async def update_comment(comment_id: int, updated_comment: schemas.Comment, db: Session = Depends(get_db)):
-    comment = crud.update_comment(db, comment_id, updated_comment)
-    if comment is None:
-        raise HTTPException(status_code=404, detail="Comment not found")
-    return comment
+async def update_comment(comment_id: int, comment: CommentUpdate, db: Session = Depends(get_db)):
+    return crud.update_comment(db, comment_id, comment)
 
 @app.delete("/comments/{comment_id}", response_model=dict)
 async def delete_comment(comment_id: int, db: Session = Depends(get_db)):
@@ -113,8 +119,11 @@ async def delete_comment(comment_id: int, db: Session = Depends(get_db)):
 # Like CRUD Operations
 
 @app.post("/likes", response_model=schemas.Like)
-async def create_like(like: schemas.Like, db: Session = Depends(get_db)):
-    return crud.create_like(db=db, like=like)
+def create_like(like: schemas.LikeCreate, db: Session = Depends(get_db)):
+    try:
+        return crud.create_like(db=db, like=like)
+    except IntegrityError:
+        raise HTTPException(status_code=404, detail="User or Recipe not found")
 
 @app.get("/likes/{like_id}", response_model=schemas.Like)
 async def get_like(like_id: int, db: Session = Depends(get_db)):
@@ -134,3 +143,17 @@ async def delete_like(like_id: int, db: Session = Depends(get_db)):
     if not deleted:
         raise HTTPException(status_code=404, detail="Like not found")
     return {"message": "Like deleted successfully"}
+
+@app.get("/users/{user_id}/comments", response_model=list[schemas.Comment])
+async def get_user_comments(user_id: int, db: Session = Depends(get_db)):
+    comments = crud.get_user_comments(db, user_id)
+    if not comments:
+        raise HTTPException(status_code=404, detail="No comments found for this user")
+    return comments
+
+@app.get("/users/{user_id}/liked_recipes", response_model=list[schemas.Recipe])
+async def get_user_liked_recipes(user_id: int, db: Session = Depends(get_db)):
+    liked_recipes = crud.get_user_liked_recipes(db, user_id)
+    if not liked_recipes:
+        raise HTTPException(status_code=404, detail="No liked recipes found for this user")
+    return liked_recipes

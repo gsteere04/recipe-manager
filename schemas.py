@@ -1,5 +1,5 @@
-from pydantic import BaseModel
-from typing import Optional, List
+from pydantic import BaseModel, ConfigDict
+from typing import Optional, ForwardRef, List
 
 class UserBase(BaseModel):
     username: str
@@ -7,51 +7,81 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     pass
 
+# Forward references
+CommentRef = ForwardRef('Comment')
+LikeRef = ForwardRef('Like')
+
 class User(UserBase):
     id: int
-
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 class RecipeBase(BaseModel):
-    name: str
+    title: str
+    description: str
     ingredients: str
     instructions: str
 
 class RecipeCreate(RecipeBase):
-    pass
+    user_id: int
+
+class RecipeUpdate(BaseModel):
+    instructions: str | None = None
+    ingredients: str | None = None
 
 class Recipe(RecipeBase):
     id: int
     user_id: int
-
-    class Config:
-        orm_mode = True
+    instructions: str | None = None
+    ingredients: str | None = None
+    model_config = ConfigDict(from_attributes=True)
 
 class CommentBase(BaseModel):
     content: str
 
 class CommentCreate(CommentBase):
-    pass
+    user_id: int
+    recipe_id: int
+
+class CommentUpdate(BaseModel):
+    content: str | None = None
 
 class Comment(CommentBase):
     id: int
     user_id: int
     recipe_id: int
-
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 class LikeBase(BaseModel):
-    pass
+    user_id: int
+    recipe_id: int
 
 class LikeCreate(LikeBase):
     pass
 
+class LikeUpdate(BaseModel):
+    user_id: int | None = None
+    recipe_id: int | None = None
+
 class Like(LikeBase):
     id: int
-    user_id: int
-    recipe_id: int
+    model_config = ConfigDict(from_attributes=True)
 
-    class Config:
-        orm_mode = True
+class RecipeUpdate(BaseModel):
+    title: str | None = None
+    ingredients: str | None = None
+    instructions: str | None = None
+    user_id: int | None = None
+    model_config = ConfigDict(from_attributes=True)
+
+class CommentUpdate(BaseModel):
+    content: str | None = None
+    model_config = ConfigDict(from_attributes=True)
+
+class LikeUpdate(BaseModel):
+    user_id: int | None = None
+    recipe_id: int | None = None
+    model_config = ConfigDict(from_attributes=True)
+
+# Update forward references
+for model in [User, Recipe, Comment, Like]:  # Add all your Pydantic models here
+    model.model_rebuild()
