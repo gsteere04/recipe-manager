@@ -53,15 +53,16 @@ def get_recipe(db: Session, recipe_id: int):
 def get_recipes(db: Session, skip: int = 0, limit: int = 10):
     return db.query(models.Recipe).offset(skip).limit(limit).all()
 
-def update_recipe(db: Session, recipe_id: int, recipe_update: schemas.RecipeUpdate):
+def update_recipe(db: Session, recipe_id: int, recipe: schemas.RecipeUpdate):
     db_recipe = db.query(models.Recipe).filter(models.Recipe.id == recipe_id).first()
     if db_recipe:
-        update_data = recipe_update.model_dump(exclude_unset=True)
+        update_data = recipe.model_dump(exclude_unset=True)
         for key, value in update_data.items():
             setattr(db_recipe, key, value)
         db.commit()
         db.refresh(db_recipe)
-    return db_recipe
+        return db_recipe
+    return None
 
 def delete_recipe(db: Session, recipe_id: int):
     recipe = db.query(models.Recipe).filter(models.Recipe.id == recipe_id).first()

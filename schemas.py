@@ -21,10 +21,16 @@ class RecipeBase(BaseModel):
     ingredients: str
     instructions: str
 
-class RecipeCreate(RecipeBase):
+class RecipeCreate(BaseModel):
+    title: str
+    description: str
     user_id: int
+    instructions: str | None = None
+    ingredients: str | None = None
 
 class RecipeUpdate(BaseModel):
+    title: str | None = None
+    description: str | None = None
     instructions: str | None = None
     ingredients: str | None = None
 
@@ -68,10 +74,9 @@ class Like(LikeBase):
 
 class RecipeUpdate(BaseModel):
     title: str | None = None
-    ingredients: str | None = None
+    description: str | None = None
     instructions: str | None = None
-    user_id: int | None = None
-    model_config = ConfigDict(from_attributes=True)
+    ingredients: str | None = None
 
 class CommentUpdate(BaseModel):
     content: str | None = None

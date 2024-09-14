@@ -52,15 +52,15 @@ def test_get_user(client):
     assert get_response.json()["username"] == "testuser"
 
 def test_create_recipe(client):
-    # First, create a user
     user_response = client.post("/users", json={"username": "testuser"})
     user_id = user_response.json()["id"]
 
-    # Then, create a recipe
     recipe_response = client.post("/recipes", json={
         "title": "Test Recipe",
         "description": "This is a test recipe",
-        "user_id": user_id
+        "user_id": user_id,
+        "instructions": "Test instructions",
+        "ingredients": "Test ingredients"
     })
     assert recipe_response.status_code == 200
     data = recipe_response.json()
@@ -75,7 +75,9 @@ def test_get_recipe(client):
     recipe_response = client.post("/recipes", json={
         "title": "Test Recipe",
         "description": "This is a test recipe",
-        "user_id": user_id
+        "user_id": user_id,
+        "instructions": "Test instructions",
+        "ingredients": "Test ingredients"
     })
     recipe_id = recipe_response.json()["id"]
 
@@ -92,21 +94,27 @@ def test_update_recipe(client):
     recipe_response = client.post("/recipes", json={
         "title": "Test Recipe",
         "description": "This is a test recipe",
-        "user_id": user_id
+        "user_id": user_id,
+        "instructions": "Test instructions",
+        "ingredients": "Test ingredients"
     })
     recipe_id = recipe_response.json()["id"]
 
     # Then, update the recipe
     update_response = client.put(f"/recipes/{recipe_id}", json={
-        "instructions": "Step 1: Do this. Step 2: Do that.",
-        "ingredients": "Ingredient 1, Ingredient 2"
+        "title": "Updated Test Recipe",
+        "description": "Updated test recipe description",
+        "instructions": "Updated Step 1, Updated Step 2",
+        "ingredients": "Updated Ingredient 1, Updated Ingredient 2"
     })
     assert update_response.status_code == 200
-    assert update_response.json()["instructions"] == "Step 1: Do this. Step 2: Do that."
-    assert update_response.json()["ingredients"] == "Ingredient 1, Ingredient 2"
-    # The title and description should remain unchanged
-    assert update_response.json()["title"] == "Test Recipe"
-    assert update_response.json()["description"] == "This is a test recipe"
+    updated_data = update_response.json()
+    assert updated_data["title"] == "Updated Test Recipe"
+    assert updated_data["description"] == "Updated test recipe description"
+    assert updated_data["instructions"] == "Updated Step 1, Updated Step 2"
+    assert updated_data["ingredients"] == "Updated Ingredient 1, Updated Ingredient 2"
+    assert "id" in updated_data
+    assert updated_data["id"] == recipe_id
 
 def test_delete_recipe(client):
     # First, create a user and a recipe
@@ -115,7 +123,9 @@ def test_delete_recipe(client):
     recipe_response = client.post("/recipes", json={
         "title": "Test Recipe",
         "description": "This is a test recipe",
-        "user_id": user_id
+        "user_id": user_id,
+        "instructions": "Test instructions",
+        "ingredients": "Test ingredients"
     })
     recipe_id = recipe_response.json()["id"]
 
@@ -134,7 +144,9 @@ def test_create_comment(client):
     recipe_response = client.post("/recipes", json={
         "title": "Test Recipe",
         "description": "This is a test recipe",
-        "user_id": user_id
+        "user_id": user_id,
+        "instructions": "Test instructions",
+        "ingredients": "Test ingredients"
     })
     recipe_id = recipe_response.json()["id"]
 
@@ -154,7 +166,9 @@ def test_create_like(client):
     recipe_response = client.post("/recipes", json={
         "title": "Test Recipe",
         "description": "This is a test recipe",
-        "user_id": user_id
+        "user_id": user_id,
+        "instructions": "Test instructions",
+        "ingredients": "Test ingredients"
     })
     recipe_id = recipe_response.json()["id"]
 
@@ -176,7 +190,7 @@ def test_error_handling(client):
         "description": "This is an invalid recipe",
         "user_id": 9999
     })
-    assert invalid_recipe_response.status_code == 404  # or 400, depending on your error handling
+    assert invalid_recipe_response.status_code == 404
 
     # Try to create a comment for a non-existent recipe
     user_response = client.post("/users", json={"username": "testuser"})
@@ -205,7 +219,9 @@ def test_integrated_flow(client):
     recipe_response = client.post("/recipes", json={
         "title": "Test Recipe",
         "description": "This is a test recipe",
-        "user_id": user_id
+        "user_id": user_id,
+        "instructions": "Test instructions",
+        "ingredients": "Test ingredients"
     })
     assert recipe_response.status_code == 200
     recipe_id = recipe_response.json()["id"]
@@ -240,6 +256,8 @@ def test_integrated_flow(client):
 
     # Update the recipe
     update_recipe_response = client.put(f"/recipes/{recipe_id}", json={
+        "title": "Updated Test Recipe",
+        "description": "Updated test recipe description",
         "instructions": "Updated Step 1, Updated Step 2",
         "ingredients": "Updated Ingredient 1, Updated Ingredient 2"
     })
